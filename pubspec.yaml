@@ -9,8 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: 1.2.0
+  http: 1.6.0
   shared_preferences: ^2.2.3
+  nfc_manager: ^4.2.1
+  geolocator: ^14.0.2
+  bluetooth_serial_android: ^1.1.2
 
 dev_dependencies:
   flutter_test:
