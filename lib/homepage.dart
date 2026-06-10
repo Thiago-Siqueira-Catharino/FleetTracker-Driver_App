@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:nfc_manager/nfc_manager_android.dart';
+import 'package:nfc_manager/nfc_manager_ios.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'usersession.dart';
@@ -93,14 +95,24 @@ class _HomePageState extends State<HomePage> {
     final completer = Completer<String?>();
 
     NfcManager.instance.startSession(
-      pollingOptions:{NfcPollingOption.iso14443}, 
+      pollingOptions: {NfcPollingOption.iso14443}, 
       onDiscovered: (NfcTag tag) async {
-        var str = tag.hashCode.toString();
+        List<int>? rawBytes;
 
-        await NfcManager.instance.stopSession();
+        final nfca = NfcAAndroid.from(tag);
 
-        if (!completer.isCompleted) {
-          completer.complete(str);
+        if (nfca != null) {
+          rawBytes = nfca.tag.id;
+        }
+
+        if (rawBytes != null) {
+          final String hex = rawBytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join().toUpperCase();
+          if (!completer.isCompleted) {
+            completer.complete(hex);
+            await NfcManager.instance.stopSession();
+          } else {
+            await NfcManager.instance.stopSession();
+          }
         }
       }
     );
@@ -126,7 +138,7 @@ class _HomePageState extends State<HomePage> {
           'Authorization': 'Bearer ${widget.session.token}', // JWT do Header!
           'ngrok-skip-browser-warning': '1' 
         },
-        body: jsonEncode({'tagUid': tagUid}),
+        body: jsonEncode({'tagId': tagUid}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
